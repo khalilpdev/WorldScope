@@ -70,9 +70,16 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export interface CountryFacets {
+  regions: string[];
+  subregions: string[];
+}
+
 export interface PaginatedCountries {
   data: CountrySummary[];
   meta: PaginationMeta;
+  /** Filter options derived from the full catalogue, not just the current page. */
+  facets: CountryFacets;
   sources: DataSourceInfo[];
   /** True when the response was served from cache. */
   cached: boolean;
@@ -169,6 +176,28 @@ export interface CompareResponse {
     indicators: Array<{ id: string; label: string; unit: string }>;
     sources: DataSourceInfo[];
   };
+  cached: boolean;
+}
+
+export interface RegionAggregate {
+  region: string;
+  countryCount: number;
+  population: number | null;
+}
+
+export interface OverviewResponse {
+  data: {
+    totals: {
+      countries: number;
+      regions: number;
+      subregions: number;
+      population: number | null;
+      populationYear: string | null;
+    };
+    regions: RegionAggregate[];
+    highlights: CountrySummary[];
+  };
+  sources: DataSourceInfo[];
   cached: boolean;
 }
 

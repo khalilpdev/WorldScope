@@ -52,6 +52,7 @@ async function bootstrap(): Promise<void> {
     )
     .setVersion('1.0')
     .addTag('health')
+    .addTag('overview')
     .addTag('countries')
     .addTag('compare')
     .addTag('favorites', 'Anonymous, client-scoped favourites')

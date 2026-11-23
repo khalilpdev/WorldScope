@@ -11,6 +11,7 @@ import { validateEnv } from './config/env.validation';
 import { CountriesModule } from './countries/countries.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { HealthModule } from './health/health.module';
+import { OverviewModule } from './overview/overview.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProvidersModule } from './providers/providers.module';
 
@@ -45,6 +46,7 @@ import { ProvidersModule } from './providers/providers.module';
     CompareModule,
     FavoritesModule,
     SavedComparisonsModule,
+    OverviewModule,
     HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
