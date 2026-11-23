@@ -1,0 +1,22 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Packages pinned in package.json that are newer than pnpm's default minimum
+# release age. The lockfile makes installs reproducible, so ageing is disabled
+# for these explicit versions only.
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.108.4'
+  - '@tanstack/react-query@5.108.4'
+  - ioredis@6.1.0
+  - lucide-react@1.78.0
+
+# Native/build scripts allowed to run. `@scarf/scarf` is intentionally excluded
+# because it only collects install telemetry.
