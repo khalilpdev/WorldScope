@@ -1,6 +1,7 @@
 // Explicit re-exports keep the CommonJS build's named exports statically
-// visible to Vite's CJS-to-ESM interop (`export *` emits a dynamic __exportStar
-// loop, which breaks named imports such as THEME_STORAGE_KEY in the browser).
+// visible to Vite's CJS-to-ESM interop (a wildcard barrel emits a dynamic
+// __exportStar loop, which breaks named imports such as THEME_STORAGE_KEY in
+// the browser).
 
 export {
   CACHE_TTL_SECONDS,
@@ -15,12 +16,7 @@ export {
   THEME_STORAGE_KEY,
   WORLD_BANK_AGGREGATE_NOTE,
 } from './constants';
-export type {
-  IndicatorDefinition,
-  IndicatorId,
-  SortableField,
-  SortOrder,
-} from './constants';
+export type { IndicatorDefinition, IndicatorId, SortableField, SortOrder } from './constants';
 
 export type {
   ApiErrorBody,
