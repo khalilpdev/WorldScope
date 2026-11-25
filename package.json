@@ -14,6 +14,13 @@
     "dev:web": "pnpm --filter @worldscope/shared build && pnpm --filter @worldscope/web dev",
     "build": "pnpm --filter @worldscope/shared build && pnpm --filter @worldscope/api build && pnpm --filter @worldscope/web build",
     "start": "pnpm --filter @worldscope/api start:prod",
+    "bootstrap": "bash scripts/worldscope.sh bootstrap",
+    "bootstrap:install": "bash scripts/worldscope.sh bootstrap --install",
+    "restart:dev": "bash scripts/worldscope.sh restart",
+    "restart:full": "bash scripts/worldscope.sh restart --mode full",
+    "status": "bash scripts/worldscope.sh status",
+    "down": "bash scripts/worldscope.sh stop",
+    "check:env": "bash scripts/worldscope.sh doctor",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -37,5 +44,6 @@
     "globals": "17.14.0",
     "prettier": "3.10.1",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.73.0"  }
+    "typescript-eslint": "8.73.0"
+  }
 }
