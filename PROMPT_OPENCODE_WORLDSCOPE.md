@@ -444,3 +444,28 @@ Explique por que o backend agrega as APIs externas, como o cache funciona e como
 O autor tem experiência forte com .NET e backend. Explique objetivamente diferenças importantes entre o ecossistema Node/React e .NET, sem transformar cada decisão em uma aula longa. Priorize padrões usados em equipes profissionais, legibilidade, testes e simplicidade. Faça uma pergunta objetiva somente quando uma decisão realmente depender do usuário.
 
 **Comece agora pela Fase 0.** Inspecione o ambiente Linux Mint e o diretório atual. Apresente o diagnóstico, o plano e as versões estáveis propostas. Aguarde confirmação antes de instalar dependências do sistema ou fazer alterações destrutivas.
+
+## 17. Incidentes já encontrados — não repetir
+
+- **Pacote `shared` com `export *` + CommonJS deixa a web em tela branca.** O
+  `@worldscope/shared` é um workspace linkado cujo build é CommonJS. Um barrel
+  com `export *` compila para um loop dinâmico `__exportStar`; o Vite não consegue
+  enxergar esses nomes como exports nomeados no navegador e o módulo falha em
+  `THEME_STORAGE_KEY` antes do React montar. Node/ESM e Vitest escondem o problema
+  (cjs-module-lexer resolve os nomes), então `pnpm typecheck`/`pnpm build`/testes
+  comuns não pegam isso. **Nunca reintroduza `export *` nesse barrel:** use
+  re-exports explícitos em `packages/shared/src/index.ts` e mantenha
+  `optimizeDeps.include: ['@worldscope/shared']` em `apps/web/vite.config.ts`.
+  A regressão está coberta por `apps/web/src/test/shared-exports.test.ts` — rode
+  `pnpm --filter @worldscope/web test` após qualquer mudança nesses arquivos.
+- **A API não tem rota em `/` nem em `/api/v1`.** `Cannot GET /` (404) e
+  `Cannot GET /api/v1` (404) são esperados. A UI fica na `:5173` (dev) ou `:8080`
+  ( containers); a API serve JSON em `/api/v1/...` e Swagger em `/api/docs`.
+  Não “corrigir” esses 404 adicionando rotas sem pedido explícito.
+- **`POST /api/v1/comparisons` usa `countryCodes`, não `codes`.** O DTO, o
+  frontend e o README precisam continuar alinhados; o campo antigo `codes` foi
+  corrigido e não deve voltar.
+- **`pnpm dev` com `nest start --watch` respawna o filho.** Parar só o PID que
+  escuta na porta gera `EADDRINUSE` no restart. `scripts/worldscope.sh` encerra o
+  grupo de processos inteiro e espera as portas 3000/5173 liberarem antes de
+  subir uma nova stack; preserve esse comportamento.

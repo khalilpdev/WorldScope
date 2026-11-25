@@ -18,8 +18,9 @@ contains no authentication and no third-party API keys are required.
 > build pass. The API + web integration was smoke-tested end to end on Linux Mint
 > 21.3 with PostgreSQL and Redis running: health, dashboard, explore, country detail,
 > indicators, weather, compare, favourites and saved comparisons all returned
-> expected results. Unit/E2E test suites and CI workflows are still pending
-> (Phase 4/5). See [Roadmap](#roadmap) and
+> expected results. A web regression suite guards the shared-package/Vite
+> interoperability fix; broader unit/E2E suites and CI workflows are still
+> pending (Phase 4/5). See [Roadmap](#roadmap) and
 > [Security and limitations](#security-and-limitations).
 
 ## Screenshot
@@ -484,18 +485,26 @@ The following commands were run against the current tree and pass:
 pnpm build         # shared + API + web
 pnpm typecheck
 pnpm lint          # 0 errors; 4 fast-refresh warnings in provider/hook modules
+pnpm test          # 4 web regression tests; API Jest has no specs yet
 pnpm check:env     # prerequisites, .env and port report
 ```
+
+`apps/web/src/test/shared-exports.test.ts` prevents a recurrence of the blank
+page caused by a wildcard barrel in the CommonJS `@worldscope/shared` package:
+Vite could not expose `THEME_STORAGE_KEY` as a named import, so React never
+mounted. The checks cover explicit source re-exports, statically detectable
+exports in the built package and Vite's `optimizeDeps` configuration. It was
+verified to fail when the previous source/configuration is restored.
 
 A manual smoke test on Linux Mint 21.3 (Node 24.22.3, pnpm 12.23.0, PostgreSQL
 17.12 and Redis 8.8.4 in Compose) verified `/health` with both dependencies up,
 all web routes and the `/api` proxy, the six read endpoints, and create/list/delete
 for favourites and saved comparisons.
 
-Automated test suites are **still not implemented**: the API uses Jest with
-`--passWithNoTests`, the web app has a Vitest setup but no specs, and Playwright
-has neither config nor specs. CI workflows are also pending. The manual smoke
-test is not a substitute for automated coverage.
+Broader automated suites are **still not implemented**: the API uses Jest with
+`--passWithNoTests`, and Playwright has neither config nor specs. CI workflows are
+also pending. The regression test and manual smoke test are not a substitute for
+full automated coverage.
 
 ## Architectural decisions
 
