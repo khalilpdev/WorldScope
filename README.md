@@ -15,10 +15,12 @@ contains no authentication and no third-party API keys are required.
 ![License MIT](https://img.shields.io/badge/license-MIT-blue)
 
 > **Status:** Phase 3 (web client) is implemented. Typecheck, lint and the production
-> build pass. Unit/E2E test suites and CI workflows are not written yet (Phase 4/5),
-> and the API + web integration has not yet been smoke-tested end to end against a
-> running database in the development environment used for this build. See
-> [Roadmap](#roadmap) and [Known limitations](#known-limitations).
+> build pass. The API + web integration was smoke-tested end to end on Linux Mint
+> 21.3 with PostgreSQL and Redis running: health, dashboard, explore, country detail,
+> indicators, weather, compare, favourites and saved comparisons all returned
+> expected results. Unit/E2E test suites and CI workflows are still pending
+> (Phase 4/5). See [Roadmap](#roadmap) and
+> [Security and limitations](#security-and-limitations).
 
 ## Screenshot
 
@@ -208,6 +210,38 @@ with `API_PROXY_TARGET`).
 > therefore all local favourites and saved comparisons. Use `down` without `-v`
 > to keep the data.
 
+## Bootstrap and restart scripts
+
+`scripts/worldscope.sh` is a single, idempotent helper for a fresh machine and for
+daily restarts. It pulls the latest code, checks prerequisites, creates `.env`
+from the template only when missing, installs dependencies from the frozen
+lockfile, applies committed migrations and starts the chosen mode. It never
+overwrites `.env` and never deletes volumes without an explicit confirmation.
+
+```bash
+./scripts/worldscope.sh bootstrap --install   # new machine: install Docker/Node/pnpm, pull, set up and start dev
+./scripts/worldscope.sh restart               # restart PostgreSQL/Redis and the API + web on the host
+./scripts/worldscope.sh restart --mode full   # restart every service in containers
+./scripts/worldscope.sh status                # container state and health endpoints
+./scripts/worldscope.sh logs api              # follow one service's logs
+./scripts/worldscope.sh stop                  # compose down, keeping volumes
+./scripts/worldscope.sh doctor                # prerequisites, .env and port usage
+```
+
+Modes are `dev` (data services in Compose, API and web on the host), `full`
+(everything in containers) and `infra` (only PostgreSQL and Redis). Useful
+flags: `--no-pull`, `--build`, `--force` (stop processes occupying API/web
+ports) and `--purge` (delete volumes, asks interactively). The same entry points
+are available as `pnpm bootstrap`, `pnpm bootstrap:install`, `pnpm restart:dev`,
+`pnpm restart:full`, `pnpm status`, `pnpm down` and `pnpm check:env`. Names avoid
+pnpm's built-in `doctor`, `stop` and `restart` commands.
+
+`bootstrap --install` installs Docker Engine and Compose v2 from the Ubuntu apt
+repositories (`docker.io` + `docker-compose-v2`) and asks for your `sudo`
+password. If `docker info` still fails afterwards, run `newgrp docker` or log
+out and back in to refresh the `docker` group membership. On a machine that
+already has Docker, plain `bootstrap` is enough.
+
 ## Using Podman instead of Docker
 
 The compose file uses only portable features (named volumes, health checks,
@@ -322,6 +356,13 @@ Root `package.json`:
 | `pnpm dev:web`       | Build shared, then start Vite                                       |
 | `pnpm build`         | Build shared, API and web for production                            |
 | `pnpm start`         | Run the built API                                                   |
+| `pnpm bootstrap`     | One-shot setup and start (`scripts/worldscope.sh bootstrap`)         |
+| `pnpm bootstrap:install` | Same, installing missing Docker/Node/pnpm prerequisites          |
+| `pnpm restart:dev`   | Restart data services and the host API + web                        |
+| `pnpm restart:full`  | Restart every service in containers                                 |
+| `pnpm status`        | Container state and health endpoints                                |
+| `pnpm down`          | Stop containers, keeping volumes                                    |
+| `pnpm check:env`     | Report prerequisites, `.env` and port usage                         |
 | `pnpm lint`          | ESLint over the repository                                          |
 | `pnpm lint:fix`      | ESLint with autofix                                                 |
 | `pnpm format`        | Prettier write                                                      |
@@ -357,6 +398,10 @@ duplicated in PostgreSQL.
 ## API
 
 Base URL: `http://localhost:3000/api/v1` · Swagger UI: `http://localhost:3000/api/docs`
+
+The API deliberately has **no route at `/`**: opening `http://localhost:3000/`
+returns `404 Cannot GET /`. Use `/api/v1/...` for JSON, `/api/docs` for Swagger UI,
+and `http://localhost:5173` (or `:8080` when running the web container) for the UI.
 
 All responses follow a small envelope with `data` (or `error`) plus `sources` and
 `cached` where applicable. Errors include `statusCode`, `error`, `message`, `path`
@@ -436,16 +481,21 @@ curl -s -X POST http://localhost:3000/api/v1/comparisons \
 The following commands were run against the current tree and pass:
 
 ```bash
-pnpm --filter @worldscope/shared build
+pnpm build         # shared + API + web
 pnpm typecheck
 pnpm lint          # 0 errors; 4 fast-refresh warnings in provider/hook modules
-pnpm --filter @worldscope/web build
+pnpm check:env     # prerequisites, .env and port report
 ```
 
-Automated test suites are **not implemented yet**: the API uses Jest with
+A manual smoke test on Linux Mint 21.3 (Node 24.22.3, pnpm 12.23.0, PostgreSQL
+17.12 and Redis 8.8.4 in Compose) verified `/health` with both dependencies up,
+all web routes and the `/api` proxy, the six read endpoints, and create/list/delete
+for favourites and saved comparisons.
+
+Automated test suites are **still not implemented**: the API uses Jest with
 `--passWithNoTests`, the web app has a Vitest setup but no specs, and Playwright
-has neither config nor specs. CI workflows are also pending. Do not treat the
-commands above as evidence that runtime behavior is tested end to end.
+has neither config nor specs. CI workflows are also pending. The manual smoke
+test is not a substitute for automated coverage.
 
 ## Architectural decisions
 
@@ -474,6 +524,8 @@ commands above as evidence that runtime behavior is tested end to end.
   network.
 - Inputs are validated with DTOs (whitelist, no unknown properties) and Prisma uses
   parameterised queries.
+- The API serves JSON only under `/api/v1`; `/` intentionally has no route and
+  returns `404 Cannot GET /`.
 - The production bundle is currently a single ~1.57 MB chunk (~510 kB gzip) because
   ECharts is imported in full; modular imports or route-level code splitting are the
   next optimisation.
