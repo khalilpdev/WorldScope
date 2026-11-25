@@ -13,6 +13,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // @worldscope/shared is a linked workspace package with a CommonJS build.
+  // Force esbuild to pre-bundle it so named imports are statically available
+  // to the browser instead of being served as raw CJS from /@fs.
+  optimizeDeps: {
+    include: ['@worldscope/shared'],
+  },
   server: {
     port: Number(process.env.WEB_PORT ?? 5173),
     strictPort: true,
