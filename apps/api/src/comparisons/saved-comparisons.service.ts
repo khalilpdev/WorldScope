@@ -28,7 +28,7 @@ export class SavedComparisonsService {
   }
 
   async create(clientId: string, dto: CreateComparisonDto): Promise<SavedComparisonRecord> {
-    const codes = [...new Set(dto.codes)];
+    const codes = [...new Set(dto.countryCodes)];
     if (codes.length < 2) {
       throw new BadRequestException('A saved comparison needs at least two distinct codes.');
     }

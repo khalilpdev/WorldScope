@@ -36,5 +36,5 @@ export class CreateComparisonDto {
   @ArrayMinSize(MIN_COMPARE_COUNTRIES)
   @ArrayMaxSize(MAX_COMPARE_COUNTRIES)
   @Matches(ISO3, { each: true, message: 'each code must be a 3-letter ISO alpha-3 code' })
-  codes!: string[];
+  countryCodes!: string[];
 }
